@@ -10,15 +10,15 @@
   </parent>
 
   <artifactId>ddd-parent</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>${revision}</version>
   <packaging>pom</packaging>
 
   <name>DDD parent</name>
   <description>DDD practice parent</description>
-  <url>https://github.com/Rugal/git-cleaner.git</url>
+  <url>https://github.com/Rugal/domain-driven-design-sample</url>
 
   <scm>
-    <connection>scm:git:ssh://git@github.com:Rugal/git-cleaner.git</connection>
+    <connection>scm:git:ssh://git@github.com:Rugal/domain-driven-design-sample.git</connection>
     <developerConnection>${project.scm.connection}</developerConnection>
     <url>${project.url}</url>
     <tag>HEAD</tag>
@@ -28,11 +28,10 @@
     <skip.surefire.tests>true</skip.surefire.tests>
     <skip.failsafe.tests>true</skip.failsafe.tests>
     <jacoco.skip.coverage.check>true</jacoco.skip.coverage.check>
+    <revision>1.0.0-SNAPSHOT</revision>
     <!--
       dependency
     -->
-<!--    <jgit.dependency.version>6.8.0.202311291450-r</jgit.dependency.version>-->
-<!--    <spring-shell.version>3.2.1</spring-shell.version>-->
     <!--
       plugin
     -->
@@ -40,7 +39,7 @@
 
   <modules>
     <module>domain</module>
-    <!--    <module>maven-plugin</module>-->
+    <module>infrastructure</module>
   </modules>
 
   <dependencyManagement>
@@ -79,7 +78,7 @@
     <dependency>
       <groupId>org.jetbrains.kotlinx</groupId>
       <artifactId>kotlinx-coroutines-core</artifactId>
-      <version>1.8.0-RC2</version>
+      <version>1.8.0</version>
     </dependency>
     <dependency>
       <groupId>io.projectreactor.kotlin</groupId>
@@ -132,7 +131,6 @@
       <plugin>
         <groupId>com.github.ozsie</groupId>
         <artifactId>detekt-maven-plugin</artifactId>
-<!--        <version>${detekt.plugin.version}</version>-->
         <configuration>
           <autoCorrect>true</autoCorrect>
           <failBuildOnMaxIssuesReached>true</failBuildOnMaxIssuesReached>
@@ -156,7 +154,6 @@
       <plugin>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-maven-plugin</artifactId>
-<!--        <version>${kotlin.version}</version>-->
         <configuration>
           <args>
             <arg>-Xjsr305=strict</arg>

@@ -10,10 +10,16 @@
     <version>${revision}</version>
   </parent>
 
-  <artifactId>domain</artifactId>
-  <name>domain module</name>
+  <artifactId>infrastructure</artifactId>
+
+  <name>infrastructure module</name>
 
   <dependencies>
+    <dependency>
+      <groupId>ga.rugal</groupId>
+      <artifactId>domain</artifactId>
+      <version>${revision}</version>
+    </dependency>
     <!-- Auto Append -->
   </dependencies>
 
