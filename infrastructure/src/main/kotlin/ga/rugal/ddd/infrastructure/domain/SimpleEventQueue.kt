@@ -5,11 +5,13 @@ import ga.rugal.ddd.domain.common.event.DomainEvent
 import ga.rugal.ddd.domain.common.event.EventQueue
 
 class SimpleEventQueue : EventQueue {
-  private val queue: MutableList<DomainEvent> = LinkedList()
+  private val q: MutableList<DomainEvent> = LinkedList()
 
   override fun enqueue(e: DomainEvent) {
-    queue += e
+    this.q += e
   }
 
-  override fun queue(): List<DomainEvent> = queue
+  override val queue: List<DomainEvent>
+    get() = this.q
+
 }

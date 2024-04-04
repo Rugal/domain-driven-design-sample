@@ -2,10 +2,11 @@ package ga.rugal.ddd.domain.school.repository
 
 import ga.rugal.ddd.domain.common.repository.Repository
 import ga.rugal.ddd.domain.school.aggregation.Course
+import reactor.core.publisher.Mono
 
 interface CourseRepository : Repository {
 
-  fun findByIdOrNull(id: Int): Course?
+  fun findById(id: Int): Mono<Course>
 
-  fun save(input: Course): Course
+  fun save(input: Course): Mono<Course>
 }

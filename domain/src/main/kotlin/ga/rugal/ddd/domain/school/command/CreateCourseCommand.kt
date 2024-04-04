@@ -1,15 +1,17 @@
 package ga.rugal.ddd.domain.school.command
 
+import ga.rugal.ddd.domain.common.command.Command
 import ga.rugal.ddd.domain.common.event.EventQueue
 import ga.rugal.ddd.domain.school.aggregation.Course
 import ga.rugal.ddd.domain.school.repository.CourseRepository
 import org.springframework.stereotype.Component
+import reactor.core.publisher.Mono
 
 data class CreateCourseCommand(
   val teacherId: Int,
   val name: String,
   val credit: Int,
-)
+) : Command
 
 @Component
 class CreateCourseCommandHandler(
@@ -17,13 +19,12 @@ class CreateCourseCommandHandler(
   private val queue: EventQueue,
 ) {
 
-  fun handle(command: CreateCourseCommand): Course {
-    // repository should return course id
+  fun handle(command: CreateCourseCommand): Mono<Course> {
     return this.repository.save(Course(
       name = command.name,
       credit = command.credit,
       teacherId = command.teacherId,
-    )).also {
+    )).doOnNext {
       it.handle(this.queue, command)
     }
   }

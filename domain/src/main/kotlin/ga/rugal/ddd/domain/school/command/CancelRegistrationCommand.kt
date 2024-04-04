@@ -1,16 +1,18 @@
 package ga.rugal.ddd.domain.school.command
 
+import ga.rugal.ddd.domain.common.command.Command
 import ga.rugal.ddd.domain.common.event.EventQueue
 import ga.rugal.ddd.domain.school.aggregation.Registration
-import ga.rugal.ddd.domain.school.event.RegistrationCancelled
 import ga.rugal.ddd.domain.school.exception.RegistrationAlreadyGradedException
 import ga.rugal.ddd.domain.school.exception.RegistrationNotFoundException
 import ga.rugal.ddd.domain.school.repository.RegistrationRepository
 import org.springframework.stereotype.Component
+import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.switchIfEmpty
 
 data class CancelRegistrationCommand(
   val registrationId: Int,
-)
+) : Command
 
 @Component
 class CancelRegistrationCommandHandler(
@@ -19,14 +21,12 @@ class CancelRegistrationCommandHandler(
 ) {
 
   @Throws(RegistrationNotFoundException::class, RegistrationAlreadyGradedException::class)
-  fun handle(command: CancelRegistrationCommand): Registration {
-    // must already exist
-    val registration = this.repository.findByIdOrNull(command.registrationId) ?: throw RegistrationNotFoundException()
-
-    registration.handle(this.queue, command)
-
-    this.repository.delete(registration)
-
-    return registration
-  }
+  fun handle(command: CancelRegistrationCommand): Mono<Registration> = this.repository
+    .findById(command.registrationId)
+    .switchIfEmpty { Mono.error(RegistrationNotFoundException()) }
+    .map {
+      it.handle(this.queue, command)
+      this.repository.delete(it)
+      it
+    }
 }
