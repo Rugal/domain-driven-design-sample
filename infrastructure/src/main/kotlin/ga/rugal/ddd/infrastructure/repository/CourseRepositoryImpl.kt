@@ -1,42 +1,26 @@
 package ga.rugal.ddd.infrastructure.repository
 
-import ga.rugal.ddd.domain.school.aggregation.Course
 import ga.rugal.ddd.domain.school.repository.CourseRepository
 import ga.rugal.ddd.infrastructure.dao.CourseDao
-import ga.rugal.ddd.infrastructure.entity.CourseTable
-import org.springframework.stereotype.Component
+import ga.rugal.ddd.infrastructure.mapper.CourseMapper
+import org.springframework.stereotype.Repository
 import reactor.core.publisher.Mono
+import ga.rugal.ddd.domain.school.aggregation.Course as Aggregation
 
-@Component
+@Repository
 class CourseRepositoryImpl(
   private val dao: CourseDao,
 ) : CourseRepository {
-  override fun findById(id: Int): Mono<Course> = this.dao
+  override fun findById(id: Int): Mono<Aggregation> = this.dao
     .findById(id)
-    .map {
-      Course(
-        id = it.id,
-        name = it.name,
-        credit = it.credit,
-        teacherId = it.teacherId,
-      )
-    }
+    .map(CourseMapper.I::to)
 
-  override fun save(input: Course): Mono<Course> = this.dao
-    .save(
-      CourseTable(
-        id = input.id,
-        name = input.name,
-        teacherId = input.teacherId,
-        credit = input.credit,
-      )
-    )
-    .map {
-      Course(
-        id = it.id,
-        name = it.name,
-        teacherId = it.teacherId,
-        credit = it.credit,
-      )
-    }
+  override fun findByIdAndTeacherId(id: Int, teacherId: Int): Mono<Aggregation> =
+    this.dao
+      .findByIdAndTeacherId(id, teacherId)
+      .map(CourseMapper.I::to)
+
+  override fun save(input: Aggregation): Mono<Aggregation> = this.dao
+    .save(CourseMapper.I.from(input))
+    .map(CourseMapper.I::to)
 }

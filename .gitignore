@@ -18,3 +18,5 @@ nb-configuration.xml
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 /domain/target/
+/infrastructure/target/
+.flattened-pom.xml

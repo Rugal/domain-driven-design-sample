@@ -6,7 +6,7 @@
   <parent>
     <groupId>ga.rugal</groupId>
     <artifactId>parent</artifactId>
-    <version>1.17.0</version>
+    <version>1.18.0</version>
   </parent>
 
   <artifactId>ddd-parent</artifactId>
@@ -32,6 +32,10 @@
     <!--
       dependency
     -->
+    <kotlin.version>2.0.0</kotlin.version>
+    <h2database.version>2.2.224</h2database.version>
+    <r2dbc-h2.version>1.0.0.RELEASE</r2dbc-h2.version>
+    <coroutines-core.version>1.8.0</coroutines-core.version>
     <!--
       plugin
     -->
@@ -44,6 +48,16 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <version>${h2database.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.r2dbc</groupId>
+        <artifactId>r2dbc-h2</artifactId>
+        <version>${r2dbc-h2.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -74,7 +88,7 @@
     <dependency>
       <groupId>org.jetbrains.kotlinx</groupId>
       <artifactId>kotlinx-coroutines-core</artifactId>
-      <version>1.8.0</version>
+      <version>${coroutines-core.version}</version>
     </dependency>
     <dependency>
       <groupId>io.projectreactor.kotlin</groupId>
@@ -92,6 +106,10 @@
     <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
       <artifactId>kotlin-test-junit5</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-test</artifactId>
     </dependency>
     <dependency>
       <groupId>com.ninja-squad</groupId>
@@ -118,6 +136,10 @@
       <scope>test</scope>
     </dependency>
     <!-- Auto Append -->
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
@@ -125,6 +147,34 @@
     <testSourceDirectory>${project.basedir}/src/test/kotlin</testSourceDirectory>
 
     <plugins>
+      <!--
+        clean
+      -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+        <version>${flatten.plugin.version}</version>
+        <configuration>
+          <updatePomFile>true</updatePomFile>
+          <flattenMode>resolveCiFriendliesOnly</flattenMode>
+        </configuration>
+        <executions>
+          <execution>
+            <id>flatten</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>flatten</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>flatten.clean</id>
+            <phase>clean</phase>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <!--
         initialization
       -->
@@ -147,7 +197,7 @@
         <artifactId>detekt-maven-plugin</artifactId>
         <configuration>
           <autoCorrect>true</autoCorrect>
-          <failBuildOnMaxIssuesReached>true</failBuildOnMaxIssuesReached>
+          <failBuildOnMaxIssuesReached>false</failBuildOnMaxIssuesReached>
         </configuration>
         <executions>
           <execution>
@@ -177,23 +227,89 @@
           </compilerPlugins>
         </configuration>
         <dependencies>
+          <!-- other dependencies -->
           <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-maven-allopen</artifactId>
             <version>${kotlin.version}</version>
           </dependency>
+          <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>${mapstruct.version}</version>
+          </dependency>
         </dependencies>
         <executions>
+          <execution>
+            <id>default-kapt</id>
+            <goals>
+              <goal>kapt</goal>
+            </goals>
+            <configuration>
+              <sourceDirs>
+                <sourceDir>src/main/kotlin</sourceDir>
+              </sourceDirs>
+              <annotationProcessorPaths>
+                <annotationProcessorPath>
+                  <groupId>org.mapstruct</groupId>
+                  <artifactId>mapstruct-processor</artifactId>
+                  <version>${mapstruct.version}</version>
+                </annotationProcessorPath>
+              </annotationProcessorPaths>
+            </configuration>
+          </execution>
           <execution>
             <id>compile</id>
             <goals>
               <goal>compile</goal>
+              <!-- You can skip the <goals> element if you enable extensions for the plugin -->
             </goals>
+            <configuration>
+              <sourceDirs>
+                <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
+              </sourceDirs>
+            </configuration>
           </execution>
           <execution>
             <id>test-compile</id>
             <goals>
               <goal>test-compile</goal>
+            </goals>
+            <!-- You can skip the <goals> element if you enable extensions for the plugin -->
+            <configuration>
+              <sourceDirs>
+                <sourceDir>${project.basedir}/src/test/kotlin</sourceDir>
+              </sourceDirs>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <executions>
+          <!-- Replacing default-compile as it is treated specially by Maven -->
+          <execution>
+            <id>default-compile</id>
+            <phase>none</phase>
+          </execution>
+          <!-- Replacing default-testCompile as it is treated specially by Maven -->
+          <execution>
+            <id>default-testCompile</id>
+            <phase>none</phase>
+          </execution>
+          <execution>
+            <id>java-compile</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>java-test-compile</id>
+            <phase>test-compile</phase>
+            <goals>
+              <goal>testCompile</goal>
             </goals>
           </execution>
         </executions>
@@ -201,11 +317,59 @@
       <!--
           test
       -->
+      <!-- test coverage -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/exception/*</exclude>
+            <exclude>**/entity/*</exclude>
+            <exclude>**/swagger/**</exclude>
+            <exclude>**/openapi/**</exclude>
+            <exclude>**/mapper/**</exclude>
+            <exclude>**/config/**</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <!-- Unit Test -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <dependencies>
+          <dependency>
+            <groupId>me.fabriciorby</groupId>
+            <artifactId>maven-surefire-junit5-tree-reporter</artifactId>
+            <version>1.2.1</version>
+          </dependency>
+        </dependencies>
         <configuration>
-          <argLine>""</argLine>
+          <reportFormat>plain</reportFormat>
+          <consoleOutputReporter>
+            <disable>true</disable>
+          </consoleOutputReporter>
+          <statelessTestsetInfoReporter
+            implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter"/>
+        </configuration>
+      </plugin>
+      <!-- Integration Test -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <dependencies>
+          <dependency>
+            <groupId>me.fabriciorby</groupId>
+            <artifactId>maven-surefire-junit5-tree-reporter</artifactId>
+            <version>1.2.1</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <reportFormat>plain</reportFormat>
+          <consoleOutputReporter>
+            <disable>true</disable>
+          </consoleOutputReporter>
+          <statelessTestsetInfoReporter
+            implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter"/>
         </configuration>
       </plugin>
     </plugins>

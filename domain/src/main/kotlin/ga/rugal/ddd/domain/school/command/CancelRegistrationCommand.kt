@@ -25,7 +25,7 @@ class CancelRegistrationCommandHandler(
     .findById(command.registrationId)
     .switchIfEmpty { Mono.error(RegistrationNotFoundException()) }
     .map {
-      it.handle(this.queue, command)
+      it.handle(this.queue, command) // will throw exception if already graded
       this.repository.delete(it)
       it
     }

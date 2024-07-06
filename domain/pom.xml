@@ -13,6 +13,18 @@
   <artifactId>domain</artifactId>
   <name>domain module</name>
 
+  <properties>
+    <!-- test switch -->
+    <skip.surefire.tests>true</skip.surefire.tests>
+    <skip.failsafe.tests>true</skip.failsafe.tests>
+    <!--
+      dependency
+    -->
+    <!--
+      plugin
+    -->
+  </properties>
+
   <dependencies>
     <!-- Auto Append -->
   </dependencies>

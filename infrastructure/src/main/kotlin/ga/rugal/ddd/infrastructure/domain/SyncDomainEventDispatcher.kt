@@ -13,7 +13,7 @@ class SyncDomainEventDispatcher(
   private val listeners: List<DomainEventListener>
 ) : DomainEventDispatcher {
   override fun dispatchNow(eventQueue: EventQueue) {
-    eventQueue.queue().forEach { event ->
+    eventQueue.queue.forEach { event ->
       listeners.forEach { listener ->
         listener.onEvent(event)
       }

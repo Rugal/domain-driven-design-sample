@@ -8,5 +8,7 @@ interface CourseRepository : Repository {
 
   fun findById(id: Int): Mono<Course>
 
+  fun findByIdAndTeacherId(id: Int, teacherId: Int): Mono<Course>
+
   fun save(input: Course): Mono<Course>
 }

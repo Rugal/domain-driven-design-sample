@@ -3,6 +3,7 @@ package ga.rugal.ddd.domain.school.command
 import ga.rugal.ddd.domain.common.command.Command
 import ga.rugal.ddd.domain.common.event.EventQueue
 import ga.rugal.ddd.domain.school.aggregation.Course
+import ga.rugal.ddd.domain.school.mapper.CourseMapper
 import ga.rugal.ddd.domain.school.repository.CourseRepository
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
@@ -20,12 +21,7 @@ class CreateCourseCommandHandler(
 ) {
 
   fun handle(command: CreateCourseCommand): Mono<Course> {
-    return this.repository.save(Course(
-      name = command.name,
-      credit = command.credit,
-      teacherId = command.teacherId,
-    )).doOnNext {
-      it.handle(this.queue, command)
-    }
+    return this.repository.save(CourseMapper.I.to(command))
+      .doOnNext { it.handle(this.queue, command) }
   }
 }

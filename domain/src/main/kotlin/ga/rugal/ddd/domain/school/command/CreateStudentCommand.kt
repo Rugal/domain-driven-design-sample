@@ -4,10 +4,10 @@ import ga.rugal.ddd.domain.common.command.Command
 import ga.rugal.ddd.domain.common.event.EventQueue
 import ga.rugal.ddd.domain.school.aggregation.Student
 import ga.rugal.ddd.domain.school.exception.DuplicatedStudentException
+import ga.rugal.ddd.domain.school.mapper.StudentMapper
 import ga.rugal.ddd.domain.school.repository.StudentRepository
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.switchIfEmpty
 
 data class CreateStudentCommand(
   val id: Int,
@@ -24,15 +24,8 @@ class CreateStudentCommandHandler(
   fun handle(command: CreateStudentCommand): Mono<Student> = this.repository
     .findById(command.id)
     .hasElement()
-    .filter { it == false }
-    .switchIfEmpty { Mono.error(DuplicatedStudentException()) }
     .flatMap {
-      this.repository.save(Student(
-        id = command.id,
-        name = command.name,
-        faculty = command.faculty,
-      )).doOnNext {
-        it.handle(this.queue, command)
-      }
+      if (it) Mono.error(DuplicatedStudentException(command.id)) else this.repository.save(StudentMapper.I.to(command))
     }
+    .doOnNext { it.handle(queue, command) }
 }

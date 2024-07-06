@@ -6,13 +6,13 @@ import ga.rugal.ddd.domain.school.aggregation.Registration
 import ga.rugal.ddd.domain.school.exception.CourseNotFoundException
 import ga.rugal.ddd.domain.school.exception.DuplicatedRegistrationException
 import ga.rugal.ddd.domain.school.exception.StudentNotFoundException
+import ga.rugal.ddd.domain.school.mapper.RegistrationMapper
 import ga.rugal.ddd.domain.school.repository.CourseRepository
 import ga.rugal.ddd.domain.school.repository.RegistrationRepository
 import ga.rugal.ddd.domain.school.repository.StudentRepository
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.switchIfEmpty
 
 data class RegisterCourseCommand(
   val courseId: Int,
@@ -39,15 +39,10 @@ class RegisterCourseCommandHandler(
         courseRepository.findById(command.courseId).hasElement(),   // will emit error if wrong
       )
       .reduce { t, u -> t && u }
-      .filter { it } // either true or some error
-      .switchIfEmpty { Mono.error(DuplicatedRegistrationException()) }
       .flatMap {
-        this.repository.save(Registration(
-          courseId = command.courseId,
-          studentId = command.studentId,
-        )).doOnNext {
-          it.handle(this.queue, command)
-        }
+        if (it) this.repository.save(RegistrationMapper.I.to(command))
+        else Mono.error(DuplicatedRegistrationException())
       }
+      .doOnNext { it.handle(this.queue, command) }
   }
 }

@@ -2,27 +2,27 @@ package ga.rugal.ddd.infrastructure.domain
 
 import ga.rugal.ddd.domain.common.event.EventQueue
 import org.springframework.stereotype.Component
-import org.springframework.transaction.PlatformTransactionManager
-import org.springframework.transaction.support.TransactionTemplate
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 
 interface CommandInvoker {
-  fun <R> invoke(run: (EventQueue) -> R): R
+  fun <R> invoke(run: (EventQueue) -> Mono<R>): Mono<R>
+
+  fun <R> invoke(run: (EventQueue) -> Flux<R>): Flux<R>
 }
 
 @Component
 class OneTransactionCommandInvoker(
-  transactionManager: PlatformTransactionManager,
-  private val domainEventDispatcher: DomainEventDispatcher
+  private val dispatcher: DomainEventDispatcher,
 ) : CommandInvoker {
-  private val transactionTemplate: TransactionTemplate = TransactionTemplate(transactionManager)
 
-  override fun <R> invoke(run: (EventQueue) -> R): R {
-    return transactionTemplate.execute {
-      val eventQueue = SimpleEventQueue()
-      val result = run(eventQueue)
-      this.domainEventDispatcher.dispatchNow(eventQueue)
+  override fun <R> invoke(run: (EventQueue) -> Mono<R>): Mono<R> = SimpleEventQueue().let { queue ->
+    run(queue) // execute command
+      .doOnSuccess { dispatcher.dispatchNow(queue) } // after everything committed, now dispatch domain event
+  }
 
-      return@execute result
-    } ?: throw IllegalStateException()
+  override fun <R> invoke(run: (EventQueue) -> Flux<R>): Flux<R> = SimpleEventQueue().let { queue ->
+    run(queue) // execute command
+      .doOnComplete { dispatcher.dispatchNow(queue) } // after everything committed, now dispatch domain event
   }
 }

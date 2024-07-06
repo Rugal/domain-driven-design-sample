@@ -3,8 +3,8 @@ package ga.rugal.ddd.domain.school.command
 import ga.rugal.ddd.domain.common.command.Command
 import ga.rugal.ddd.domain.common.event.EventQueue
 import ga.rugal.ddd.domain.school.aggregation.Registration
+import ga.rugal.ddd.domain.school.exception.AccessDeniedException
 import ga.rugal.ddd.domain.school.exception.GradeFormatException
-import ga.rugal.ddd.domain.school.exception.GradeOutsideException
 import ga.rugal.ddd.domain.school.exception.RegistrationAlreadyGradedException
 import ga.rugal.ddd.domain.school.exception.RegistrationNotFoundException
 import ga.rugal.ddd.domain.school.repository.CourseRepository
@@ -26,23 +26,15 @@ class GradeStudentCommandHandler(
   private val queue: EventQueue,
 ) {
 
-  @Throws(RegistrationNotFoundException::class, RegistrationAlreadyGradedException::class, GradeFormatException::class)
+  @Throws(
+    RegistrationNotFoundException::class,
+    RegistrationAlreadyGradedException::class,
+    GradeFormatException::class,
+    AccessDeniedException::class
+  )
   fun handle(command: GradeStudentCommand): Mono<Registration> = this.repository
     .findById(command.registrationId)
     .switchIfEmpty { Mono.error(RegistrationNotFoundException()) }
-    .filterWhen { r ->
-      this.courseRepository
-        .findById(r.courseId)
-        .map { it.teacherId == command.teacherId }
-    }
-    .switchIfEmpty { Mono.error(GradeOutsideException()) }
-    .map {
-      it.handle(this.queue, command)
-      this.repository.save(
-        it.copy(
-          grade = command.grade
-        )
-      )
-      it
-    }
+    .map { it.handle(queue, command, this.courseRepository) }
+    .flatMap(this.repository::save)
 }
